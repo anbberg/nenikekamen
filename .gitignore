@@ -1,0 +1,57 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+.envrc
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local config / secrets
+.env
+graph_token_cache.bin
+state.json
+
+# Temp file (downloaded from OneDrive, contains personal data)
+local_training.xlsx
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
