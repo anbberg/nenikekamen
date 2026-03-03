@@ -7,17 +7,17 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 
 LOG_HEADERS = [
-    "Datum",
-    "Distans (km)",
-    "Tid (min:sek)",
-    "Pace (min/km)",
-    "Höjd (m)",
-    "Puls snitt",
-    "Puls max",
-    "Typ",
-    "Strava ID",
-    "Strava länk",
-    "Namn",
+    "start_datetime",
+    "distance_km",
+    "duration_s",
+    "speed_km_h",
+    "elevation_m",
+    "avg_heart_rate",
+    "max_heart_rate",
+    "sport_type",
+    "strava_id",
+    "strava_url",
+    "name",
 ]
 
 
@@ -32,10 +32,26 @@ def _get_or_create_log_sheet(wb_path: Path, sheet_name: str) -> Worksheet:
     else:
         ws = wb.create_sheet(title=sheet_name)
 
-    # Ensure headers on first row
+    # Ensure headers on the first row:
+    # - If the sheet is empty, create all standard headers.
+    # - If the sheet already has headers, never change existing cells.
+    #   We only allow adding new headers to the right if we introduce
+    #   more columns in LOG_HEADERS in the future.
     if ws.max_row == 0 or all(cell.value is None for cell in ws[1]):
+        # Empty sheet: write all headers.
         for idx, header in enumerate(LOG_HEADERS, start=1):
             ws.cell(row=1, column=idx, value=header)
+    else:
+        # Existing sheet: respect current headers.
+        # If there are fewer header cells than LOG_HEADERS, add missing
+        # headers to the right, but never overwrite non-empty cells.
+        current_headers = [cell.value for cell in ws[1]]
+        existing_cols = len(current_headers)
+        for offset, header in enumerate(LOG_HEADERS[existing_cols:], start=1):
+            col_idx = existing_cols + offset
+            cell = ws.cell(row=1, column=col_idx)
+            if cell.value is None:
+                cell.value = header
 
     wb.save(wb_path)
     return ws
@@ -79,19 +95,6 @@ def _get_existing_strava_ids(path: Path, sheet_name: str) -> Set[Any]:
     return ids
 
 
-def _format_duration(seconds: int) -> str:
-    minutes, sec = divmod(int(seconds), 60)
-    return f"{minutes:d}:{sec:02d}"
-
-
-def _format_pace(distance_km: float, moving_time_s: int) -> Optional[str]:
-    if distance_km <= 0 or moving_time_s <= 0:
-        return None
-    pace_s_per_km = moving_time_s / distance_km
-    minutes, sec = divmod(int(pace_s_per_km), 60)
-    return f"{minutes:d}:{sec:02d}"
-
-
 def append_runs_to_log(
     path: Path,
     sheet_name: str,
@@ -113,7 +116,9 @@ def append_runs_to_log(
         if strava_id in existing_ids:
             continue
 
-        start_dt_local = _parse_iso_datetime(run.get("start_date_local") or run.get("start_date"))
+        start_dt_local = _parse_iso_datetime(
+            run.get("start_date_local") or run.get("start_date")
+        )
         distance_km = (run.get("distance_m") or 0.0) / 1000.0
         moving_time_s = int(run.get("moving_time_s") or 0)
         total_elev = run.get("total_elevation_gain")
@@ -123,14 +128,22 @@ def append_runs_to_log(
         strava_url = run.get("strava_url")
         name = run.get("name")
 
-        duration_str = _format_duration(moving_time_s) if moving_time_s else None
-        pace_str = _format_pace(distance_km, moving_time_s)
+        # Store raw numeric values: duration in seconds, speed in km/h
+        duration_s: Optional[int] = moving_time_s or None
+        speed_km_h: Optional[float] = None
+        if distance_km > 0 and moving_time_s > 0:
+            speed_km_h = round(distance_km / (moving_time_s / 3600.0), 2)
+
+        # Use full local start timestamp (date + time) for Excel.
+        start_dt_excel: Optional[datetime] = (
+            start_dt_local.replace(tzinfo=None) if start_dt_local else None
+        )
 
         row = [
-            start_dt_local.date().isoformat() if start_dt_local else None,
+            start_dt_excel,
             round(distance_km, 2) if distance_km else None,
-            duration_str,
-            pace_str,
+            duration_s,
+            speed_km_h,
             total_elev,
             avg_hr,
             max_hr,

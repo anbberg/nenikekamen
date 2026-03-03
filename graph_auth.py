@@ -35,10 +35,12 @@ def get_graph_access_token(
     token_cache_path: str,
 ) -> str:
     """
-    Acquire an access token for Microsoft Graph using device code flow.
+    Acquire an access token for Microsoft Graph.
 
-    On first run, this will print a device code and URL. You complete
-    authentication on another device, and the token will then be cached.
+    Flow (same on Windows and Pi):
+    - First try to acquire a token silently from the local cache.
+    - If that fails, use the device code flow where you open a URL
+      on any device and enter the code shown in the terminal.
     """
     # MSAL does not accept reserved scopes (offline_access, profile, openid) in the list.
     scopes_for_msal = [s for s in scopes if s not in MSAL_RESERVED_SCOPES]
@@ -49,17 +51,29 @@ def get_graph_access_token(
     cache = _get_token_cache(cache_file)
 
     authority = _build_authority(tenant_id)
-    app = msal.PublicClientApplication(client_id=client_id, authority=authority, token_cache=cache)
+    app = msal.PublicClientApplication(
+        client_id=client_id,
+        authority=authority,
+        token_cache=cache,
+    )
 
-    # Try silent acquisition first
-    result: Dict = app.acquire_token_silent(scopes=scopes_for_msal, account=None)
+    # Try silent acquisition first using any cached account
+    accounts = app.get_accounts()
+    result: Dict | None = None
+    if accounts:
+        result = app.acquire_token_silent(scopes=scopes_for_msal, account=accounts[0])
 
     if not result:
-        # Interactive flow: opens your browser automatically for normal OAuth login.
-        # Uses fixed port so redirect_uri matches Azure. Add http://localhost:8400
-        # to your app's "Mobile and desktop applications" redirect URIs.
-        print("Opening browser for Microsoft sign-in...")
-        result = app.acquire_token_interactive(scopes=scopes_for_msal, port=8400)
+        # Device code flow: shows a code + URL in the terminal.
+        flow: Dict = app.initiate_device_flow(scopes=scopes_for_msal)
+        if "user_code" not in flow:
+            raise RuntimeError(f"Failed to initiate device flow: {flow}")
+
+        print("\nTo sign in to Microsoft Graph (device code flow):")
+        print(flow["message"])
+        print()
+
+        result = app.acquire_token_by_device_flow(flow)  # blocks until completed
 
     if "access_token" not in result:
         raise RuntimeError(f"Failed to obtain access token: {result.get('error_description')}")

@@ -47,7 +47,6 @@ def main() -> None:
     print(f"Fetching all activities from Strava since {training_start.isoformat()}...")
     activities = strava_client.fetch_activities(since=training_start)
     print(f"Found {len(activities)} activities")
-    print(activities)
     if not activities:
         print("No activities found in the configured training window.")
         return
