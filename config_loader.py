@@ -39,6 +39,10 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
             "temp_excel_path": os.environ.get("TEMP_EXCEL_PATH", "local_training.xlsx"),
             "training_start_date": os.environ.get("TRAINING_START_DATE", ""),
         },
+        "telegram": {
+            "bot_token": os.environ.get("TELEGRAM_BOT_TOKEN", ""),
+            "chat_id": os.environ.get("TELEGRAM_CHAT_ID", ""),
+        },
     }
 
     # Basic sanity check to fail fast if key values are missing.
