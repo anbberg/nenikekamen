@@ -77,13 +77,16 @@ def test_append_runs_to_log_writes_expected_values(tmp_path):
     # There should be one data row after the header
     row = list(ws.iter_rows(min_row=2, max_row=2, values_only=True))[0]
 
-    start_dt, distance_km, duration_s, speed_km_h = row[:4]
+    start_dt, week_number, distance_km, duration_s, speed_km_h = row[:5]
 
     # start_datetime is stored as naive datetime
     assert isinstance(start_dt, dt.datetime)
     assert start_dt.year == 2026
     assert start_dt.month == 1
     assert start_dt.day == 2
+
+    # week_number: 2026-01-02 is ISO week 1 -> 202601
+    assert week_number == 202601
 
     # Distance in km rounded to 2 decimals
     assert distance_km == 5.0
@@ -95,11 +98,11 @@ def test_append_runs_to_log_writes_expected_values(tmp_path):
     assert speed_km_h == 12.0
 
     # Heart rate and IDs in the right columns
-    assert row[4] == 42.0  # elevation_m
-    assert row[5] == 140.0  # avg_heart_rate
-    assert row[6] == 170.0  # max_heart_rate
-    assert row[7] == "Run"  # sport_type
-    assert row[8] == 123  # strava_id
-    assert row[9] == "https://www.strava.com/activities/123"
-    assert row[10] == "Test Run"
+    assert row[5] == 42.0  # elevation_m
+    assert row[6] == 140.0  # avg_heart_rate
+    assert row[7] == 170.0  # max_heart_rate
+    assert row[8] == "Run"  # sport_type
+    assert row[9] == 123  # strava_id
+    assert row[10] == "https://www.strava.com/activities/123"
+    assert row[11] == "Test Run"
 

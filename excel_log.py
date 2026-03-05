@@ -8,6 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 LOG_HEADERS = [
     "start_datetime",
+    "week_number",
     "distance_km",
     "duration_s",
     "speed_km_h",
@@ -69,6 +70,27 @@ def _parse_iso_datetime(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def _first_empty_data_row(ws: Worksheet) -> int:
+    """
+    Return the first row index (>= 2) where all log columns are empty.
+    If the sheet has no data rows or all rows are filled, return max_row + 1.
+    This way we fill gaps when the user has cleared rows instead of deleting them.
+    """
+    num_cols = len(LOG_HEADERS)
+    for row_idx in range(2, ws.max_row + 2):
+        if row_idx > ws.max_row:
+            return row_idx
+        empty = True
+        for col_idx in range(1, num_cols + 1):
+            val = ws.cell(row=row_idx, column=col_idx).value
+            if val is not None and val != "":
+                empty = False
+                break
+        if empty:
+            return row_idx
+    return ws.max_row + 1
+
+
 def _get_existing_strava_ids(path: Path, sheet_name: str) -> Set[Any]:
     """
     Return a set of Strava IDs that are already present in the log sheet.
@@ -86,10 +108,10 @@ def _get_existing_strava_ids(path: Path, sheet_name: str) -> Set[Any]:
         if not row:
             continue
         # Some rows may have fewer columns if the sheet was edited manually.
-        # Guard against short tuples before accessing index 8 (9th column).
-        if len(row) <= 8:
+        # Guard against short tuples before accessing strava_id column.
+        if len(row) <= 9:
             continue
-        strava_id = row[8]  # index 8 -> 9th column
+        strava_id = row[9]  # strava_id column (0-based)
         if strava_id is not None:
             ids.add(strava_id)
     return ids
@@ -110,6 +132,7 @@ def append_runs_to_log(
 
     wb = load_workbook(path)
     ws = wb[sheet_name]
+    next_row = _first_empty_data_row(ws)
 
     for run in runs:
         strava_id = run.get("id")
@@ -138,9 +161,15 @@ def append_runs_to_log(
         start_dt_excel: Optional[datetime] = (
             start_dt_local.replace(tzinfo=None) if start_dt_local else None
         )
+        # ISO week as YYYYWW (e.g. 202601) for pivot/aggregate by week.
+        week_number: Optional[int] = None
+        if start_dt_local:
+            y, w, _ = start_dt_local.isocalendar()
+            week_number = y * 100 + w
 
         row = [
             start_dt_excel,
+            week_number,
             round(distance_km, 2) if distance_km else None,
             duration_s,
             speed_km_h,
@@ -153,7 +182,9 @@ def append_runs_to_log(
             name,
         ]
 
-        ws.append(row)
+        for col_idx, value in enumerate(row, start=1):
+            ws.cell(row=next_row, column=col_idx, value=value)
+        next_row += 1
         existing_ids.add(strava_id)
 
     wb.save(path)
