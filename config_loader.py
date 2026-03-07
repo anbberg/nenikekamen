@@ -43,6 +43,11 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
             "bot_token": os.environ.get("TELEGRAM_BOT_TOKEN", ""),
             "chat_id": os.environ.get("TELEGRAM_CHAT_ID", ""),
         },
+        "plan_summary": {
+            "sheet_name": os.environ.get("PLAN_AGG_SHEET", ""),
+            "summary_cells": os.environ.get("PLAN_AGG_SUMMARY", ""),
+            "wait_seconds": int(os.environ.get("PLAN_AGG_WAIT_SECONDS", "3") or "3"),
+        },
     }
 
     # Basic sanity check to fail fast if key values are missing.

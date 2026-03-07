@@ -1,9 +1,9 @@
-import datetime as dt
-from pathlib import Path
-
-from openpyxl import load_workbook
-
-from excel_log import LOG_HEADERS, append_runs_to_log, _get_or_create_log_sheet, _parse_iso_datetime
+from excel_log import (
+    LOG_HEADERS,
+    STRAVA_ID_COLUMN_INDEX,
+    _parse_iso_datetime,
+    run_to_log_row,
+)
 
 
 def test_parse_iso_datetime_parses_z_and_offset():
@@ -17,87 +17,31 @@ def test_parse_iso_datetime_parses_z_and_offset():
 
     assert parsed_z is not None
     assert parsed_offset is not None
-    # 10:00Z == 11:00+01:00
     assert parsed_z == parsed_offset
     assert parsed_invalid is None
 
 
-def test_get_or_create_log_sheet_creates_file_and_headers(tmp_path):
-    wb_path = tmp_path / "log.xlsx"
-    sheet_name = "Logg"
-
-    ws = _get_or_create_log_sheet(wb_path, sheet_name)
-
-    assert wb_path.exists()
-    assert ws.title == sheet_name
-
-    # First row should match LOG_HEADERS for a brand-new sheet
-    header_values = [cell.value for cell in ws[1][: len(LOG_HEADERS)]]
-    assert header_values == LOG_HEADERS
-
-
-def test_get_or_create_log_sheet_does_not_overwrite_existing_headers(tmp_path):
-    wb_path = tmp_path / "log.xlsx"
-    sheet_name = "Logg"
-
-    # First create with our default headers
-    ws = _get_or_create_log_sheet(wb_path, sheet_name)
-    # Manually change a header to simulate user editing in Excel
-    ws["A1"].value = "custom_header"
-    ws.parent.save(wb_path)
-
-    # Call helper again; it should NOT overwrite existing headers
-    ws2 = _get_or_create_log_sheet(wb_path, sheet_name)
-    assert ws2["A1"].value == "custom_header"
-
-
-def test_append_runs_to_log_writes_expected_values(tmp_path):
-    wb_path = tmp_path / "log.xlsx"
-    sheet_name = "Logg"
-
-    # One synthetic Strava activity
+def test_run_to_log_row_produces_log_headers_order():
     run = {
         "id": 123,
         "name": "Test Run",
         "start_date_local": "2026-01-02T09:10:21Z",
         "distance_m": 5000.0,
-        "moving_time_s": 1500,  # 25 minutes
+        "moving_time_s": 1500,
         "total_elevation_gain": 42.0,
         "average_heartrate": 140.0,
         "max_heartrate": 170.0,
         "sport_type": "Run",
         "strava_url": "https://www.strava.com/activities/123",
     }
-
-    append_runs_to_log(wb_path, sheet_name, [run])
-
-    wb = load_workbook(wb_path, data_only=True)
-    ws = wb[sheet_name]
-
-    # There should be one data row after the header
-    row = list(ws.iter_rows(min_row=2, max_row=2, values_only=True))[0]
-
-    start_dt, week_number, distance_km, duration_s, speed_km_h = row[:5]
-
-    # start_datetime is stored as naive datetime
-    assert isinstance(start_dt, dt.datetime)
-    assert start_dt.year == 2026
-    assert start_dt.month == 1
-    assert start_dt.day == 2
-
-    # week_number: 2026-01-02 is ISO week 1 -> 202601
-    assert week_number == 202601
-
-    # Distance in km rounded to 2 decimals
-    assert distance_km == 5.0
-
-    # Raw duration in seconds
-    assert duration_s == 1500
-
-    # Speed km/h: distance_km / (seconds / 3600) = 12.0
-    assert speed_km_h == 12.0
-
-    # Heart rate and IDs in the right columns
+    row = run_to_log_row(run)
+    assert len(row) == len(LOG_HEADERS)
+    # start_datetime as ISO string
+    assert row[0].startswith("2026-01-02")
+    assert row[1] == 202601  # week_number
+    assert row[2] == 5.0  # distance_km
+    assert row[3] == 1500  # duration_s
+    assert row[4] == 12.0  # speed_km_h
     assert row[5] == 42.0  # elevation_m
     assert row[6] == 140.0  # avg_heart_rate
     assert row[7] == 170.0  # max_heart_rate
@@ -106,3 +50,6 @@ def test_append_runs_to_log_writes_expected_values(tmp_path):
     assert row[10] == "https://www.strava.com/activities/123"
     assert row[11] == "Test Run"
 
+
+def test_strava_id_column_index_matches_headers():
+    assert LOG_HEADERS[STRAVA_ID_COLUMN_INDEX] == "strava_id"
