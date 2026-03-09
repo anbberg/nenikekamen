@@ -80,4 +80,3 @@ def get_graph_access_token(
 
     _save_token_cache(cache, cache_file)
     return result["access_token"]
-

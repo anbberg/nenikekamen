@@ -1,9 +1,8 @@
 import os
-from pathlib import Path
 
 import pytest
 
-from config_loader import load_config
+from nenikekamen.config_loader import load_config
 
 
 def test_load_config_reads_required_values_from_env(tmp_path, monkeypatch):
@@ -21,7 +20,6 @@ def test_load_config_reads_required_values_from_env(tmp_path, monkeypatch):
                 "STRAVA_CLIENT_SECRET=secret",
                 "STRAVA_REFRESH_TOKEN=refresh",
                 "TRAINING_START_DATE=2026-01-01",
-                "TEMP_EXCEL_PATH=local.xlsx",
                 "GRAPH_SCOPES=Files.ReadWrite.All offline_access",
             ]
         ),
@@ -30,10 +28,7 @@ def test_load_config_reads_required_values_from_env(tmp_path, monkeypatch):
 
     # Ensure environment is clean for these keys
     for key in list(os.environ.keys()):
-        if key.startswith("GRAPH_") or key.startswith("STRAVA_") or key in {
-            "TRAINING_START_DATE",
-            "TEMP_EXCEL_PATH",
-        }:
+        if key.startswith("GRAPH_") or key.startswith("STRAVA_") or key == "TRAINING_START_DATE":
             monkeypatch.delenv(key, raising=False)
 
     cfg = load_config(dotenv_path=str(env_file))
@@ -48,7 +43,6 @@ def test_load_config_reads_required_values_from_env(tmp_path, monkeypatch):
     assert cfg["strava"]["client_secret"] == "secret"
     assert cfg["strava"]["refresh_token"] == "refresh"
 
-    assert cfg["runtime"]["temp_excel_path"] == "local.xlsx"
     assert cfg["runtime"]["training_start_date"] == "2026-01-01"
 
     # GRAPH_SCOPES is split on spaces
@@ -61,10 +55,7 @@ def test_load_config_raises_on_missing_required_keys(tmp_path, monkeypatch):
     env_file.write_text("", encoding="utf-8")
 
     for key in list(os.environ.keys()):
-        if key.startswith("GRAPH_") or key.startswith("STRAVA_") or key in {
-            "TRAINING_START_DATE",
-            "TEMP_EXCEL_PATH",
-        }:
+        if key.startswith("GRAPH_") or key.startswith("STRAVA_") or key == "TRAINING_START_DATE":
             monkeypatch.delenv(key, raising=False)
 
     with pytest.raises(RuntimeError) as excinfo:

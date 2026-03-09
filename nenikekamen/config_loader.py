@@ -36,7 +36,6 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
             "refresh_token": os.environ.get("STRAVA_REFRESH_TOKEN", ""),
         },
         "runtime": {
-            "temp_excel_path": os.environ.get("TEMP_EXCEL_PATH", "local_training.xlsx"),
             "training_start_date": os.environ.get("TRAINING_START_DATE", ""),
         },
         "telegram": {
@@ -45,7 +44,6 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
         },
         "plan_summary": {
             "sheet_name": os.environ.get("PLAN_AGG_SHEET", ""),
-            "summary_cells": os.environ.get("PLAN_AGG_SUMMARY", ""),
             "wait_seconds": int(os.environ.get("PLAN_AGG_WAIT_SECONDS", "3") or "3"),
         },
     }
@@ -73,5 +71,3 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
         )
 
     return config
-
-

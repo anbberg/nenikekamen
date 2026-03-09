@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from strava_client import STRAVA_ACTIVITIES_URL, STRAVA_TOKEN_URL, StravaClient
+from nenikekamen.strava_client import STRAVA_ACTIVITIES_URL, STRAVA_TOKEN_URL, StravaClient
 
 
 class DummyResponse:
@@ -28,7 +28,7 @@ def test_refresh_access_token_success(monkeypatch):
             ok=True,
         )
 
-    monkeypatch.setattr("strava_client.requests.post", fake_post)
+    monkeypatch.setattr("nenikekamen.strava_client.requests.post", fake_post)
 
     client = StravaClient("cid", "secret", "old_refresh")
     token = client._refresh_access_token()
@@ -73,8 +73,8 @@ def test_fetch_activities_uses_after_and_maps_fields(monkeypatch):
         ]
         return DummyResponse(status_code=200, json_data=activities, ok=True)
 
-    monkeypatch.setattr("strava_client.requests.post", fake_post)
-    monkeypatch.setattr("strava_client.requests.get", fake_get)
+    monkeypatch.setattr("nenikekamen.strava_client.requests.post", fake_post)
+    monkeypatch.setattr("nenikekamen.strava_client.requests.get", fake_get)
 
     client = StravaClient("cid", "secret", "refresh")
 
@@ -119,8 +119,8 @@ def test_fetch_activities_retries_on_401(monkeypatch):
             return DummyResponse(status_code=401, json_data={"message": "unauthorized"}, ok=False)
         return DummyResponse(status_code=200, json_data=[], ok=True)
 
-    monkeypatch.setattr("strava_client.requests.post", fake_post)
-    monkeypatch.setattr("strava_client.requests.get", fake_get)
+    monkeypatch.setattr("nenikekamen.strava_client.requests.post", fake_post)
+    monkeypatch.setattr("nenikekamen.strava_client.requests.get", fake_get)
 
     client = StravaClient("cid", "secret", "refresh")
     result = client.fetch_activities()

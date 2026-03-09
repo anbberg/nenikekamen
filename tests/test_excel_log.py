@@ -1,4 +1,4 @@
-from excel_log import (
+from nenikekamen.excel_log import (
     LOG_HEADERS,
     STRAVA_ID_COLUMN_INDEX,
     _parse_iso_datetime,

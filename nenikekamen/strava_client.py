@@ -117,4 +117,3 @@ class StravaClient:
             )
 
         return result
-
