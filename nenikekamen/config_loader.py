@@ -48,7 +48,8 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
         },
     }
 
-    # Basic sanity check to fail fast if key values are missing.
+    # Fail fast if Graph config is missing (needed by both sync and analyse).
+    # Strava and TRAINING_START_DATE are only required by sync; analyse can run without them.
     missing = []
     if not config["graph"]["client_id"]:
         missing.append("GRAPH_CLIENT_ID")
@@ -56,14 +57,6 @@ def load_config(dotenv_path: str | None = ".env") -> Dict[str, Any]:
         missing.append("GRAPH_TENANT_ID")
     if not config["graph"]["excel_path"]:
         missing.append("GRAPH_EXCEL_PATH")
-    if not config["strava"]["client_id"]:
-        missing.append("STRAVA_CLIENT_ID")
-    if not config["strava"]["client_secret"]:
-        missing.append("STRAVA_CLIENT_SECRET")
-    if not config["strava"]["refresh_token"]:
-        missing.append("STRAVA_REFRESH_TOKEN")
-    if not config["runtime"]["training_start_date"]:
-        missing.append("TRAINING_START_DATE")
 
     if missing:
         raise RuntimeError(

@@ -12,7 +12,7 @@ jobs:
   analyse:
     runs-on: ubuntu-latest
     env:
-      # Secrets
+      # Secrets (analyse only needs Graph + Telegram)
       GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
       GRAPH_EXCEL_PATH: ${{ secrets.GRAPH_EXCEL_PATH }}
       GRAPH_TOKEN_CACHE_B64: ${{ secrets.GRAPH_TOKEN_CACHE_B64 }}
