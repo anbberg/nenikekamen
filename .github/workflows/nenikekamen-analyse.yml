@@ -12,13 +12,16 @@ jobs:
   analyse:
     runs-on: ubuntu-latest
     env:
+      # Secrets
       GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
-      GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}
       GRAPH_EXCEL_PATH: ${{ secrets.GRAPH_EXCEL_PATH }}
       GRAPH_TOKEN_CACHE_B64: ${{ secrets.GRAPH_TOKEN_CACHE_B64 }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      PLAN_AGG_SHEET: ${{ secrets.PLAN_AGG_SHEET }}
+
+      # Variables
+      GRAPH_TENANT_ID: ${{ vars.GRAPH_TENANT_ID }}
+      PLAN_AGG_SHEET: ${{ vars.PLAN_AGG_SHEET }}
 
     steps:
       - uses: actions/checkout@v4

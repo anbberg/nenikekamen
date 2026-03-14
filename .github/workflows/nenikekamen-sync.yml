@@ -12,18 +12,21 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
+      # Secrets
       GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
-      GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}
       GRAPH_EXCEL_PATH: ${{ secrets.GRAPH_EXCEL_PATH }}
       GRAPH_TOKEN_CACHE_B64: ${{ secrets.GRAPH_TOKEN_CACHE_B64 }}
       STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
       STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
       STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
-      TRAINING_START_DATE: ${{ secrets.TRAINING_START_DATE }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      GRAPH_LOG_SHEET_NAME: ${{ secrets.GRAPH_LOG_SHEET_NAME }}
-      PLAN_AGG_SHEET: ${{ secrets.PLAN_AGG_SHEET }}
+
+      # Variables
+      GRAPH_TENANT_ID: ${{ vars.GRAPH_TENANT_ID }}
+      TRAINING_START_DATE: ${{ vars.TRAINING_START_DATE }}
+      GRAPH_LOG_SHEET_NAME: ${{ vars.GRAPH_LOG_SHEET_NAME }}
+      PLAN_AGG_SHEET: ${{ vars.PLAN_AGG_SHEET }}
 
     steps:
       - uses: actions/checkout@v4
