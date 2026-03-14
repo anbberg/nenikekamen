@@ -18,7 +18,7 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> bool:
         text = text[:TRUNCATE_AT].rstrip() + "\n\n[... trunkerat]"
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": text}
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
 
     try:
         resp = requests.post(url, json=payload, timeout=10)
