@@ -23,7 +23,7 @@ from nenikekamen.sync_analyse import parse_training_start_date
 from nenikekamen.telegram_notify import send_telegram_message
 
 
-def main() -> None:
+def main(*, only_notify_on_new: bool = False) -> int:
     config = load_config()
 
     graph_cfg = config["graph"]
@@ -106,13 +106,17 @@ def main() -> None:
 
         print("Done.")
         if telegram_configured:
+            # When only_notify_on_new, skip "Inga nya pass" to avoid spam (e.g. hourly runs).
             if new_runs:
                 msg = f"✅ Sync lyckades. Hittade {len(new_runs)} nya pass."
-            else:
+                send_telegram_message(bot_token, chat_id, msg)
+            elif not only_notify_on_new:
                 msg = "✅ Sync lyckades. Inga nya pass."
-            send_telegram_message(bot_token, chat_id, msg)
+                send_telegram_message(bot_token, chat_id, msg)
         else:
             print("Telegram not configured. No message is sent.")
+
+        return len(new_runs)
 
     except Exception as exc:
         if telegram_configured:

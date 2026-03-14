@@ -1,0 +1,48 @@
+# Hourly during "awake" window: sync then analyse (and send Telegram) only when new activities were added.
+# See README section "Running on GitHub Actions".
+
+name: Nenikekamen – Hourly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6-22 * * *"
+
+jobs:
+  sync-then-analyse:
+    runs-on: ubuntu-latest
+    env:
+      GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
+      GRAPH_TENANT_ID: ${{ vars.GRAPH_TENANT_ID }}
+      GRAPH_EXCEL_PATH: ${{ secrets.GRAPH_EXCEL_PATH }}
+      GRAPH_TOKEN_CACHE_B64: ${{ secrets.GRAPH_TOKEN_CACHE_B64 }}
+      STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+      STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+      STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
+      TRAINING_START_DATE: ${{ vars.TRAINING_START_DATE }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      GRAPH_LOG_SHEET_NAME: ${{ vars.GRAPH_LOG_SHEET_NAME }}
+      PLAN_AGG_SHEET: ${{ vars.PLAN_AGG_SHEET }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore Microsoft Graph token cache
+        run: |
+          if [ -n "$GRAPH_TOKEN_CACHE_B64" ]; then
+            echo "$GRAPH_TOKEN_CACHE_B64" | base64 -d > graph_token_cache.bin
+          else
+            echo "::error::GRAPH_TOKEN_CACHE_B64 is not set. See README for how to create it."
+            exit 1
+          fi
+
+      - name: Run sync then analyse (if new activities)
+        run: python sync_analyze.py

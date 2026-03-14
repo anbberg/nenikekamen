@@ -57,7 +57,7 @@ def main() -> None:
 
         print("Done.")
         if telegram_configured:
-            msg = "Nenikekamen: Analys.\n\n" + summary_str
+            msg = summary_str
             print(msg)
             send_telegram_message(bot_token, chat_id, msg)
         else:
